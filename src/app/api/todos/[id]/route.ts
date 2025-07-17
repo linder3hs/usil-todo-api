@@ -3,15 +3,15 @@ import { pool } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 
 interface RouteParams {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 // GET - Obtener una tarea específica
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
-    const { id } = params;
+    const { id } = await params;
 
     // Validar que el ID sea un número
     const todoId = parseInt(id);
@@ -52,7 +52,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 // PUT - Actualizar una tarea completa
 export async function PUT(request: NextRequest, { params }: RouteParams) {
   try {
-    const { id } = params;
+    const { id } = await params;
     const body = await request.json();
     const { name, isCompleted } = body;
 
@@ -117,7 +117,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 // PATCH - Actualizar parcialmente una tarea (útil para toggle de completed)
 export async function PATCH(request: NextRequest, { params }: RouteParams) {
   try {
-    const { id } = params;
+    const { id } = await params;
     const body = await request.json();
 
     // Validar que el ID sea un número
@@ -208,7 +208,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 // DELETE - Eliminar una tarea
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
-    const { id } = params;
+    const { id } = await params;
 
     // Validar que el ID sea un número
     const todoId = parseInt(id);
