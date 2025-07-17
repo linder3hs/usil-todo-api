@@ -1,15 +1,23 @@
-import { todosData } from "@/lib/todos";
+// src/app/api/todos/route.ts
+import { pool } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 
+// GET - Obtener todas las tareas
 export async function GET() {
   try {
+    const client = await pool.connect();
+    const result = await client.query(
+      "SELECT id, name, is_completed, created_at, updated_at FROM todos ORDER BY created_at DESC"
+    );
+    client.release();
+
     return NextResponse.json({
       success: true,
-      data: todosData,
-      total: todosData.length,
+      data: result.rows,
+      total: result.rows.length,
     });
   } catch (error) {
-    console.log({ error });
+    console.error("Error al obtener tareas:", error);
     return NextResponse.json(
       { success: false, error: "Error interno del servidor" },
       { status: 500 }
@@ -17,6 +25,7 @@ export async function GET() {
   }
 }
 
+// POST - Crear nueva tarea
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -34,25 +43,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Crear nueva tarea
-    const newTodo = {
-      id: Math.max(...todosData.map((todo) => todo.id)) + 1,
-      name: name.trim(),
-      isCompleted: Boolean(isCompleted),
-    };
-
-    todosData.push(newTodo);
+    const client = await pool.connect();
+    const result = await client.query(
+      "INSERT INTO todos (name, is_completed) VALUES ($1, $2) RETURNING *",
+      [name.trim(), Boolean(isCompleted)]
+    );
+    client.release();
 
     return NextResponse.json(
       {
         success: true,
-        data: newTodo,
+        data: result.rows[0],
         message: "Tarea creada exitosamente",
       },
       { status: 201 }
     );
   } catch (error) {
-    console.log({ error });
+    console.error("Error al crear tarea:", error);
     return NextResponse.json(
       { success: false, error: "Error al procesar la solicitud" },
       { status: 500 }
